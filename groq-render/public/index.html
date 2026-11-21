@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#0b0d14">
+  <title>GroqChat AI — Сверхбыстрый ИИ на базе Groq API</title>
+  <style>
+    html, body {
+      background-color: #0b0d14 !important;
+      color: #f8fafc !important;
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      min-height: -webkit-fill-available;
+      min-height: 100dvh;
+    }
+  </style>
+  <link rel="stylesheet" href="highlight-theme.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f55036'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="brand">
+          <div class="brand-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13 2L3 14h8l-1 8 11-12h-8l1-8z"/>
+            </svg>
+          </div>
+          <div class="brand-info">
+            <div class="brand-title">
+              GroqChat <span class="brand-badge">LPU</span>
+            </div>
+            <span class="brand-sub">Ультраскоростной ИИ</span>
+          </div>
+        </a>
+        <button class="sidebar-close-btn" id="closeSidebarBtn" title="Закрыть меню">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="new-chat-btn" id="newChatBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Новый диалог
+        </button>
+
+        <div class="search-box">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchChatsInput" class="search-input" placeholder="Поиск диалогов...">
+        </div>
+      </div>
+
+      <div class="history-section" id="historyList">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-key-status" id="sidebarKeyStatus" title="Нажмите для настройки ключа">
+          <div class="key-status-indicator">
+            <div class="status-dot" id="sidebarDot"></div>
+            <span id="sidebarKeyText">Ключ не настроен</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+
+        <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="groq-link">
+          <span>Получить ключ Groq (Бесплатно)</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN CHAT AREA -->
+    <main class="main-content">
+      <!-- Top Navigation Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle-btn" id="openSidebarBtn" title="Открыть меню">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <!-- Model Picker Pill -->
+          <button class="model-picker-btn" id="openModelPickerBtn" title="Сменить модель">
+            <svg class="model-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13 2L3 14h8l-1 8 11-12h-8l1-8z"/>
+            </svg>
+            <span id="activeModelName">Qwen 3.8 27B</span>
+            <span class="model-pill-badge" id="activeModelBadge">32k</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- Persona Tag -->
+          <button class="persona-tag-btn" id="openPersonaModalBtn" title="Настроить роль ИИ">
+            <span id="activePersonaIcon">🧠</span>
+            <span id="activePersonaLabel">Универсальный помощник</span>
+          </button>
+        </div>
+
+        <div class="topbar-right">
+          <!-- API Key Pill -->
+          <button class="key-pill-btn missing" id="headerKeyBtn">
+            <div class="status-dot missing" id="headerKeyDot"></div>
+            <span id="headerKeyLabel">Groq API Ключ</span>
+          </button>
+
+          <!-- Export Chat -->
+          <button class="icon-btn" id="exportChatBtn" title="Экспортировать чат">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+
+          <!-- Settings -->
+          <button class="icon-btn" id="openSettingsBtn" title="Настройки">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Chat Messages Area -->
+      <div class="chat-scroll-area" id="chatScrollArea">
+        <div class="chat-center-wrap" id="chatCenterWrap">
+          <!-- Welcome Screen (Visible when chat is empty) -->
+          <div class="welcome-container" id="welcomeContainer">
+            <div class="welcome-logo-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13 2L3 14h8l-1 8 11-12h-8l1-8z"/>
+              </svg>
+              <span>Сверхбыстрый ИИ на процессорах Groq LPU™</span>
+            </div>
+
+            <h1 class="welcome-title">Чем могу помочь сегодня?</h1>
+            <p class="welcome-subtitle">
+              Семейный помощник на базе Groq LPU™: мгновенные ответы, рецепты, помощь с учебой, делами и творчеством.
+            </p>
+
+            <!-- Quick API key card (if key missing) -->
+            <div class="key-setup-card" id="welcomeKeyCard">
+              <div class="key-card-header">
+                <div class="key-card-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <div class="key-card-title">Подключите ваш Groq API Ключ</div>
+              </div>
+              <p class="key-card-desc">
+                Для общения с ИИ вставьте ваш API-ключ Groq. Он сохранится локально в вашем браузере и не передается третьим лицам.
+              </p>
+              <div class="key-input-row">
+                <input type="password" id="welcomeKeyInput" class="welcome-key-input" placeholder="gsk_..." autocomplete="off">
+                <button class="welcome-key-btn" id="welcomeSaveKeyBtn">Подключить</button>
+              </div>
+              <div class="key-card-help">
+                <span>Нет ключа? Регистрация бесплатна:</span>
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">Получить на console.groq.com ↗</a>
+              </div>
+            </div>
+
+            <!-- Starter Prompts Grid -->
+            <div class="starters-grid" id="startersGrid">
+              <div class="starter-card" data-prompt="Придумай вкусный, быстрый и полезный рецепт семейного ужина на 3-4 человека из простых продуктов. Напиши пошаговое приготовление и полезные советы.">
+                <div class="starter-header">
+                  <span class="starter-emoji">🍳</span>
+                  <span class="starter-tag">Дом & Кулинария</span>
+                </div>
+                <div class="starter-text">
+                  Вкусный и быстрый рецепт семейного ужина с пошаговыми инструкциями
+                </div>
+              </div>
+
+              <div class="starter-card" data-prompt="Объясни простыми и интересными словами, как будто ребенку или подростку: почему небо голубое, а закат красный, и как устроена радуга?">
+                <div class="starter-header">
+                  <span class="starter-emoji">🌟</span>
+                  <span class="starter-tag">Учеба & Любопытство</span>
+                </div>
+                <div class="starter-text">
+                  Объясни простыми словами: почему небо голубое, а закат красный?
+                </div>
+              </div>
+
+              <div class="starter-card" data-prompt="Помоги составить теплое, душевное и красивое поздравление с днем рождения для близкого человека. Добавь искренние пожелания и приятные слова.">
+                <div class="starter-header">
+                  <span class="starter-emoji">🎉</span>
+                  <span class="starter-tag">Поздравления</span>
+                </div>
+                <div class="starter-text">
+                  Душевное и красивое поздравление с днем рождения
+                </div>
+              </div>
+
+              <div class="starter-card" data-prompt="Помоги написать грамотное, вежливое и четкое обращение или письмо по официальному вопросу (в управляющую компанию, банк или на работу).">
+                <div class="starter-header">
+                  <span class="starter-emoji">📝</span>
+                  <span class="starter-tag">Помощь & Дела</span>
+                </div>
+                <div class="starter-text">
+                  Грамотный текст официального заявления или письма
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Messages Container -->
+          <div id="messagesList" style="display: none; flex-direction: column; gap: 20px;"></div>
+        </div>
+      </div>
+
+      <!-- Input Dock -->
+      <div class="input-dock">
+        <div class="input-container-inner">
+          <div class="input-box">
+            <div class="input-top-bar">
+              <div class="input-chip" id="inputPersonaChip" title="Кликните для изменения роли">
+                <span id="inputPersonaIcon">🧠</span>
+                <span id="inputPersonaText">Универсальный помощник</span>
+              </div>
+            </div>
+
+            <textarea id="chatInput" class="chat-textarea" placeholder="Спросите что угодно у ИИ... (рецепт, совет, помощь с учебой или работой)" rows="1"></textarea>
+
+            <div class="input-bottom-bar">
+              <div class="input-hints">
+                <span id="liveSpeedometer" style="display: none;" class="speed-metric">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h8l-1 8 11-12h-8l1-8z"/></svg>
+                  <span id="liveTokensPerSec">0 т/сек</span>
+                </span>
+                <span>Enter — отправить, Shift+Enter — перенос</span>
+              </div>
+
+              <div class="input-buttons">
+                <button class="stop-btn" id="stopGenerationBtn" style="display: none;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                  </svg>
+                  Стоп
+                </button>
+
+                <button class="send-btn" id="sendBtn" title="Отправить сообщение (Enter)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       MODALS
+       ========================================================================== -->
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <div class="modal-title">Настройки GroqChat</div>
+        </div>
+        <button class="modal-close-btn" id="closeSettingsBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="tab-key">API Ключ</button>
+        <button class="modal-tab-btn" data-tab="tab-params">Параметры ИИ</button>
+        <button class="modal-tab-btn" data-tab="tab-about">О Groq LPU</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Tab 1: API Key -->
+        <div class="tab-pane active" id="tab-key">
+          <div class="form-group">
+            <label class="form-label">
+              <span>Groq API Key</span>
+              <span id="keyValidationBadge" style="font-size: 11px;"></span>
+            </label>
+            <div class="input-with-action">
+              <input type="password" id="modalApiKeyInput" class="input-field" placeholder="gsk_..." style="font-family: var(--font-mono);">
+              <button class="input-action-btn" id="toggleKeyVisibilityBtn" title="Показать/скрыть">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            <div class="form-desc">Ключ сохраняется локально в памяти вашего браузера.</div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn-primary" id="testKeyBtn">
+              <span>Проверить ключ</span>
+            </button>
+            <button class="btn-danger" id="clearKeyBtn">Удалить ключ</button>
+          </div>
+
+          <div class="guide-box" style="margin-top: 18px;">
+            <div style="font-weight: 600; color: #fff; margin-bottom: 8px;">Как получить бесплатный ключ Groq:</div>
+            <ol>
+              <li>Перейдите в консоль <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys ↗</a></li>
+              <li>Войдите через Google или GitHub аккаунт.</li>
+              <li>Нажмите зеленую кнопку <strong>«Create API Key»</strong>.</li>
+              <li>Скопируйте сгенерированный ключ (начинается на <code>gsk_</code>) и вставьте его выше.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Tab 2: Generation Parameters -->
+        <div class="tab-pane" id="tab-params" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Модель по умолчанию</label>
+            <select id="modalModelSelect" class="input-field">
+              <option value="qwen/qwen3.8-27b">Qwen 3.8 27B (Ультраскорость & Ум)</option>
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B (Флагман 120B)</option>
+              <option value="openai/gpt-oss-20b">GPT-OSS 20B (Компактный GPT)</option>
+              <option value="allam-2-7b">Allam 2 7B (Мультиязычный)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>Роль / Системный промт</span>
+            </label>
+            <select id="modalPersonaSelect" class="input-field">
+              <option value="default">🧠 Универсальный помощник</option>
+              <option value="coder">💻 Senior Fullstack разработчик</option>
+              <option value="copywriter">✍️ Креативный копирайтер и редактор</option>
+              <option value="analyst">🔬 Глубокий аналитик и фактчекер</option>
+              <option value="translator">🌐 Профессиональный переводчик</option>
+              <option value="custom">✏️ Свой системный промт...</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="customPromptGroup" style="display: none;">
+            <label class="form-label">Текст своего системного промта</label>
+            <textarea id="modalCustomPrompt" class="input-field" rows="3" placeholder="Опишите, как модель должна себя вести..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>Температура (Креативность)</span>
+              <span id="tempValueBadge" class="slider-value-badge">0.7</span>
+            </label>
+            <div class="slider-wrap">
+              <input type="range" id="modalTempSlider" class="range-slider" min="0" max="1.5" step="0.05" value="0.7">
+            </div>
+            <div class="form-desc">0.1 — строго и фактологично, 0.7 — баланс, 1.2+ — максимум воображения.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>Максимум токенов ответа</span>
+              <span id="maxTokensValueBadge" class="slider-value-badge">4096</span>
+            </label>
+            <div class="slider-wrap">
+              <input type="range" id="modalMaxTokensSlider" class="range-slider" min="512" max="8192" step="256" value="4096">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: About Groq -->
+        <div class="tab-pane" id="tab-about" style="display: none;">
+          <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13.5px; line-height: 1.6; color: var(--text-secondary);">
+            <div style="background: rgba(245, 80, 54, 0.1); border: 1px solid rgba(245, 80, 54, 0.25); border-radius: var(--radius-md); padding: 14px;">
+              <div style="font-weight: 700; color: #ff7849; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h8l-1 8 11-12h-8l1-8z"/></svg>
+                Groq LPU™ (Language Processing Unit)
+              </div>
+              Groq разработал инновационный тензорный процессор, оптимизированный исключительно для последовательного инференса больших языковых моделей (LLM).
+            </div>
+
+            <div>
+              <strong style="color: #fff;">⚡ Почему скорость до 1000 токенов/сек?</strong><br>
+              Традиционные GPU (NVIDIA H100/A100) используют внешнюю память HBM с высокой задержкой шины памяти. LPU размещает веса и вычисления в ультраскоростной статической памяти SRAM прямо на кристалле, обеспечивая пропускную способность до десятков терабайт в секунду без задержек.
+            </div>
+
+            <div>
+              <strong style="color: #fff;">🎯 Поддерживаемые модели:</strong>
+              <ul style="margin: 6px 0 0 20px;">
+                <li><strong>Llama 3.3 70B:</strong> Флагман от Meta с глубоким пониманием и 128k контекстом</li>
+                <li><strong>Llama 3.1 8B Instant:</strong> Молниеносная скорость генерации (до 800+ токенов/сек)</li>
+                <li><strong>DeepSeek R1 Distill 70B:</strong> Рассуждения и пошаговая цепочка мыслей</li>
+                <li><strong>Mixtral 8x7B:</strong> Архитектура смеси экспертов (MoE)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-primary" id="saveSettingsBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model Selection Modal -->
+  <div class="modal-overlay" id="modelPickerModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color: var(--groq-orange);">
+            <path d="M13 2L3 14h8l-1 8 11-12h-8l1-8z"/>
+          </svg>
+          <div class="modal-title">Выберите модель Groq</div>
+        </div>
+        <button class="modal-close-btn" id="closeModelPickerBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding-top: 14px;">
+        <div class="search-box" style="margin-bottom: 12px;">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="modelSearchInput" class="search-input" placeholder="Поиск среди моделей...">
+        </div>
+
+        <div class="model-list-grid" id="modalModelsList">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <div class="modal-title">Экспорт диалога</div>
+        </div>
+        <button class="modal-close-btn" id="closeExportModalBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p style="font-size: 13.5px; color: var(--text-secondary);">
+          Сохраните текущую переписку в удобном формате на ваш компьютер или скопируйте полный текст.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="model-option-card" id="exportMarkdownBtn">
+            <div class="model-opt-info">
+              <div class="model-opt-name">📄 Скачать Markdown (.md)</div>
+              <div class="model-opt-desc">Удобно для Notion, Obsidian, GitHub и заметок</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </button>
+
+          <button class="model-option-card" id="exportJsonBtn">
+            <div class="model-opt-info">
+              <div class="model-opt-name">📦 Скачать JSON (.json)</div>
+              <div class="model-opt-desc">Полная структура данных с ролями, промтами и датами</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </button>
+
+          <button class="model-option-card" id="copyAllTextBtn">
+            <div class="model-opt-info">
+              <div class="model-opt-name">📋 Скопировать текст в буфер</div>
+              <div class="model-opt-desc">Быстро скопировать весь диалог для вставки</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HTML / Code Live Preview Modal -->
+  <div class="modal-overlay" id="codePreviewModal">
+    <div class="preview-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #60a5fa;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+          </svg>
+          <div class="modal-title" id="previewModalTitle">Интерактивный просмотр страницы</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="btn-secondary" id="previewDownloadBtn" style="padding: 6px 12px; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Скачать файл
+          </button>
+          <button class="modal-close-btn" id="closeCodePreviewBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <iframe id="previewIframe" class="preview-iframe" sandbox="allow-scripts"></iframe>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="vendor.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
